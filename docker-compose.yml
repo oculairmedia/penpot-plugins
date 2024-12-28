@@ -1,24 +1,30 @@
-version: '3.8'
+name: penpot-plugin
 
 services:
-  penpot-plugin:
-    build: .
+  template-api:
+    image: oculair/penpot-template-api:latest
     ports:
-      - "3000:3000"
-    volumes:
-      # Mount source code for development
-      - ./src:/app/src
-      - ./public:/app/public
-      - ./index.html:/app/index.html
-      # Exclude node_modules and dist
-      - /app/node_modules
-      - /app/dist
-    environment:
-      - NODE_ENV=production
+      - 3000:3000
     restart: unless-stopped
     networks:
-      - penpot-plugin-network
+      - penpot-plugins-net
+    labels:
+      - com.docker.compose.project=penpot-plugins
+      - com.docker.compose.service=template-api
+      - com.centurylinklabs.watchtower.enable=true
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - require("http").get("http://localhost:3000/manifest.json", (res) => {
+          if (res.statusCode !== 200) { process.exit(1) } });
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
 networks:
-  penpot-plugin-network:
+  penpot-plugins-net:
+    name: penpot_plugin_network
     driver: bridge
