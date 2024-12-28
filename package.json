@@ -1,0 +1,19 @@
+{
+  "name": "penpot-template-api-plugin",
+  "version": "1.0.0",
+  "description": "Plugin for programmatically modifying and exporting Penpot templates",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@penpot/plugin-styles": "^0.0.2",
+    "@penpot/plugin-types": "^0.0.2"
+  },
+  "devDependencies": {
+    "typescript": "^5.2.2",
+    "vite": "^5.0.0"
+  }
+}
