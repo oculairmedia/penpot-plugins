@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  penpot-plugin:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      # Mount source code for development
+      - ./src:/app/src
+      - ./public:/app/public
+      - ./index.html:/app/index.html
+      # Exclude node_modules and dist
+      - /app/node_modules
+      - /app/dist
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    networks:
+      - penpot-plugin-network
+
+networks:
+  penpot-plugin-network:
+    driver: bridge
