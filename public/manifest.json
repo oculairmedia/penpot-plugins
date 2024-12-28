@@ -1,12 +1,8 @@
 {
-  "name": "Template API Plugin",
+  "name": "My Test Plugin",
   "code": "plugin.js",
-  "description": "Plugin for programmatically modifying and exporting Penpot templates",
-  "permissions": [
-    "content:read",
-    "content:write",
-    "library:read",
-    "library:write",
-    "allow:downloads"
-  ]
+  "description": "This is a test plugin for Penpot.",
+  "icon": "icon.png",
+  "permissions": ["content:read", "content:write"],
+  "url": "http://localhost:4400/plugin.js"
 }

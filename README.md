@@ -1,163 +1,141 @@
-# Template API Plugin for Penpot
+# Penpot Plugin Starter Template
 
-This plugin enables programmatic modification and export of Penpot templates through a user interface and API endpoints.
+This repository is designed to be your starting point for creating plugins for Penpot. It includes everything you need to get started quickly with development and build processes, so you can focus solely on coding. The template uses Vite as the bundler and comes pre-configured with TypeScript, though you can write your code in vanilla JavaScript if you prefer, while keeping TypeScript to handle Penpot typings in the `plugin.ts` file.
 
-## Prerequisites
+## Pre-requisites
 
-- Node.js (v16 or higher)
-- npm (v8 or higher)
-- Access to a Penpot instance
+- Node.js and npm (<a href="https://nodejs.org/en/download/package-manager" target="_blank">Download</a>).
+- Git (<a href="https://git-scm.com/downloads" target="_blank">Download</a>).
+- Visual Studio Code (<a href="https://code.visualstudio.com/download" target="_blank">Download</a>) or similar.
+- Basic HTML, CSS and javascript knowledge.
 
-## Installation Steps
+## Folders and Files
 
-1. **Clone the Repository**
-   ```bash
-   git clone <your-repo-url>
-   cd template-api-plugin
-   ```
+- **`/`**: the root directory containing important files like `index.html`, the entry point for your plugin, along with configuration files such as `tsconfig.json` or `package.json`.
 
-2. **Install Dependencies**
-   ```bash
-   npm install
-   ```
+- **`public/`**: includes static assets like `manifest.json` for plugin metadata.
 
-3. **Build the Plugin**
-   ```bash
-   npm run build
-   ```
+- **`src/`**: contains the core source files for your plugin.
 
-4. **Serve the Plugin**
-   You have several options to serve the plugin:
+- **`node_modules/`**: contains external dependencies used for development, installed via npm.
 
-   a. Using http-server (recommended for testing):
-   ```bash
-   npm install -g http-server
-   http-server dist -p 3000 --cors
-   ```
+- **`dist/`**: the output directory generated after the build process, containing the production-ready plugin files for deployment.
 
-   b. Using your own web server:
-   - Copy the contents of the `dist` directory to your web server
-   - Ensure CORS headers are properly set:
-     ```
-     Access-Control-Allow-Origin: *
-     Access-Control-Allow-Methods: GET, POST, OPTIONS
-     Access-Control-Allow-Headers: Content-Type
-     ```
+### What is typescript?
 
-## Plugin Installation in Penpot
+TypeScript is like JavaScript with extra rules. These rules help you catch mistakes early, before you run your code. It makes your code more reliable and easier to manage, especially in big projects.
 
-1. Open your Penpot instance
-2. Press `Ctrl + Alt + P` (or `Cmd + Alt + P` on macOS) to open the Plugin Manager
-3. Click "Install plugin"
-4. Enter the plugin manifest URL:
-   ```
-   http://<your-server-ip>:3000/manifest.json
-   ```
-   Replace `<your-server-ip>` with your server's IP address or domain name
+We're using TypeScript to make working with the Penpot API easier, as it provides autocompletion and instant access to documentation.
 
-## Project Structure
-```
-template-api-plugin/
-├── src/
-│   ├── plugin.ts    # Main plugin logic
-│   ├── main.ts      # UI interaction handling
-│   └── style.css    # Plugin styles
-├── public/
-│   └── manifest.json # Plugin manifest
-├── dist/            # Built files (after npm run build)
-└── index.html       # Plugin UI template
+### What are plugin.ts and plugin.js files?
+
+The `plugin.ts` file is where you write code to interact with the Penpot API using TypeScript. This file is then compiled into `plugin.js` which is the final JavaScript code that runs the plugin. You don't write `plugin.js` directly; it's generated from the `plugin.ts` file.
+
+**Note that this is also the only file where you can use the Penpot object.** Do not try to use the Penpot object in your plugin interface scripts.
+
+### What is manifest.json file?
+
+The `manifest.json` file contains the basic information about the plugin. It defines the plugin's name, description, the main code file, and the permissions it requires. The structure of the `manifest.json` file looks like this:
+
+```json
+{
+  "name": "Your plugin name",
+  "description": "Your plugin description",
+  "code": "plugin-file.js",
+  "icon": "your-icon.png",
+  "permissions": [
+    "content:read",
+    "content:write",
+    "library:read",
+    "library:write",
+    "user:read"
+  ]
+}
 ```
 
-## Plugin Features
+This file is essential for the plugin to function correctly within Penpot.
 
-1. **Template Information**
-   - View current board information
-   - List selected objects and their properties
-   - Access object IDs for modification
+## Getting Started
 
-2. **Template Modification**
-   - Modify selected objects programmatically
-   - Example modification:
-     ```json
-     {
-       "name": "New Object Name",
-       "content": "New Content"
-     }
-     ```
+[![Watch the video how to use starter template](https://penpot.github.io/penpot-plugin-starter-template/plugin-starter-template.png)](https://penpot.github.io/penpot-plugin-starter-template/plugin-starter-template.mp4)
 
-3. **Export Information**
-   - Get details about selected objects
-   - Prepare objects for external export processing
+### Use this template
 
-## Development Workflow
+Click the "Use this template" button at the top of the GitHub repository page. That'll create a new repository in your account with all the template files.
 
-1. **Making Changes**
-   - Modify plugin logic in `src/plugin.ts`
-   - Update UI in `index.html` and `src/main.ts`
-   - Adjust styles in `src/style.css`
+Now that your repository was created you can clone it in your machine to start working with it:
 
-2. **Building and Testing**
-   ```bash
-   # Build the plugin
-   npm run build
+```bash
+git clone <your-repository-url>
+```
 
-   # Serve for testing
-   http-server dist -p 3000 --cors
-   ```
+### Install Dependencies
 
-3. **Reloading in Penpot**
-   - After making changes, rebuild the plugin
-   - In Penpot, remove and reinstall the plugin to see changes
+After cloning the repository, navigate into the project directory and install the necessary dependencies by running:
 
-## Troubleshooting
+```bash
+cd <your-project-name>
+npm install
+```
 
-1. **CORS Issues**
-   - Ensure your server is sending proper CORS headers
-   - Check browser console for CORS-related errors
-   - Verify the manifest URL is accessible from Penpot
+This command installs all the required packages listed in the `package.json` file.
 
-2. **Plugin Not Loading**
-   - Verify the manifest.json is accessible
-   - Check browser console for loading errors
-   - Ensure all plugin files are being served correctly
+### Configure the Plugin
 
-3. **Changes Not Appearing**
-   - Clear browser cache
-   - Rebuild the plugin
-   - Remove and reinstall the plugin in Penpot
+Next, you need to edit the plugin's configuration file:
 
-## Security Notes
+1. Open the `manifest.json` file located in the `/public` folder.
+2. Make any necessary changes to your `plugin.ts`file. Note that any modifications to this file require you to restart the development server for changes to take effect. You can check our repository <a href="https://github.com/penpot/penpot-plugins-samples" target="_blank">Penpot plugins samples</a> for specific examples.
 
-- The plugin requires specific permissions defined in manifest.json
-- All modifications are made through Penpot's plugin API
-- User authentication is handled by Penpot
-- No sensitive data is stored by the plugin
+### Run the Development Server
 
-## Quick Start Example
+To start the development server, run the following command in your terminal:
 
-1. **Build and Serve**
-   ```bash
-   # First time setup
-   npm install
-   npm run build
-   
-   # Serve the plugin
-   http-server dist -p 3000 --cors
-   ```
+```bash
+npm run dev
+```
 
-2. **Install in Penpot**
-   - Open Penpot
-   - Press Ctrl + Alt + P
-   - Enter: http://<your-server-ip>:3000/manifest.json
+Once the server is running, open your web browser and go to `http://localhost:4400` to view your plugin in action. Now it is ready to be loaded in Penpot with the url `http://localhost:4400/manifest.json`.
 
-3. **Test Basic Functionality**
-   - Select an object in Penpot
-   - Click "Get Template Info" in the plugin
-   - Try modifying the object using its ID
+### Load your local plugin
 
-## Support
+To load and test your local plugin running on `http://localhost:4400`, follow these steps:
 
-For issues or questions:
-1. Check the troubleshooting section
-2. Review browser console logs
-3. Contact repository maintainers
+1. **Open the Plugin Manager:** Use the shortcut `Ctrl + Alt + P` in any file to open the Plugin Manager modal.
+
+2. **Enter the manifest URL:** In the Plugin Manager, provide the URL for your local plugin's manifest file. For a local setup, this URL will be: `http://localhost:4400/manifest.json`.
+
+3. **Install the plugin:** After entering the URL, Penpot will attempt to install the plugin. If there are no issues, the plugin will be successfully installed.
+
+4. **Access the plugin:** Once installed, you can open and use the plugin directly from within Penpot whenever you need it.
+
+## Development
+
+### Technologies Used
+
+This plugin template uses several key technologies:
+
+- **TypeScript**
+- **Vite**
+- **Web Components**
+
+### Libraries Included
+
+The template includes two Penpot libraries to assist in your development:
+
+- `@penpot/plugin-styles`: <a href="https://www.npmjs.com/package/@penpot/plugin-styles" target="_blank">This library</a> provides utility functions and resources to help you style your components consistently with Penpot's design system.
+- `@penpot/plugin-types`: <a href="https://www.npmjs.com/package/@penpot/plugin-types" target="_blank">This library</a> includes types and API descriptions for interacting with the Penpot plugin API, facilitating the development of plugins that can communicate effectively with the Penpot app.
+
+## Deployment
+
+### Build your plugin
+
+```bash
+npm run build
+```
+
+### Deploy your plugin
+
+After successfully building your plugin, now you're ready to use your chosen platform to deploy it.
+
+Check our <a href="https://help.penpot.app/plugins/deployment/" target="_blank">Deployment guide</a> for more information about how to deploy your plugin in multiple platforms.

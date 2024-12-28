@@ -3,53 +3,23 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Template API Plugin</title>
-    <link rel="stylesheet" href="@penpot/plugin-styles/styles.css">
+    <title>Penpot plugin example</title>
   </head>
   <body>
-    <div id="app" class="plugin">
-      <div class="plugin-content">
-        <h1>Template API Plugin</h1>
-        
-        <div class="section">
-          <h2>Template Information</h2>
-          <button type="button" data-appearance="primary" data-handler="get-info">Get Template Info</button>
-          <pre id="templateInfo" class="info-display"></pre>
-        </div>
+    <p>Penpot plugin starter template</p>
 
-        <div class="section">
-          <h2>Modify Template</h2>
-          <div class="form-group">
-            <label>Element ID:</label>
-            <input type="text" id="elementId" class="input">
-          </div>
-          <div class="form-group">
-            <label>Properties (JSON):</label>
-            <textarea id="properties" class="textarea" rows="4"></textarea>
-          </div>
-          <button type="button" data-appearance="primary" data-handler="modify-template">Apply Modifications</button>
-        </div>
+    <p>
+      Checkout the
+      <a target="_blank" href="https://help.penpot.app/plugins/"
+        >documentation</a
+      >
+      to get started.
+    </p>
 
-        <div class="section">
-          <h2>Export Template</h2>
-          <div class="form-group">
-            <label>Format:</label>
-            <select id="exportFormat" class="select">
-              <option value="png">PNG</option>
-              <option value="svg">SVG</option>
-              <option value="pdf">PDF</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Scale:</label>
-            <input type="number" id="exportScale" class="input" value="1" min="0.1" max="4" step="0.1">
-          </div>
-          <button type="button" data-appearance="primary" data-handler="export-template">Export Template</button>
-        </div>
+    <button type="button" data-appearance="primary" data-handler="create-text">
+      Create text
+    </button>
 
-        <div id="messages" class="messages"></div>
-      </div>
-    </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
