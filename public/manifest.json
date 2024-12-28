@@ -1,0 +1,12 @@
+{
+  "name": "Template API Plugin",
+  "code": "plugin.js",
+  "description": "Plugin for programmatically modifying and exporting Penpot templates",
+  "permissions": [
+    "content:read",
+    "content:write",
+    "library:read",
+    "library:write",
+    "allow:downloads"
+  ]
+}
