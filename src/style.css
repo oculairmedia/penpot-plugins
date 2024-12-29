@@ -55,6 +55,7 @@ h2 {
   bottom: 1rem;
   right: 1rem;
   max-width: 300px;
+  z-index: 1000;
 }
 
 .message {
@@ -77,6 +78,20 @@ h2 {
 .message-warning {
   background: var(--warning-color);
   color: black;
+}
+
+/* Debug logs */
+.logs {
+  height: 200px;
+  overflow-y: auto;
+  background: var(--background-color-soft);
+  padding: 1rem;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.9rem;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  margin-top: 1rem;
 }
 
 @keyframes slideIn {
