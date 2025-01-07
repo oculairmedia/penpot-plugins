@@ -1,4 +1,27 @@
-@import "@penpot/plugin-styles/styles.css";
+/* Penpot Plugin Styles */
+:root {
+  --text-color: #11181C;
+  --text-color-soft: #687076;
+  --background-color: #FFFFFF;
+  --background-color-soft: #F8F9FA;
+  --border-color: #E6E8EB;
+  --primary-color: #0091FF;
+  --success-color: #17B26A;
+  --warning-color: #F5A623;
+  --danger-color: #F31260;
+}
+
+[data-theme="dark"] {
+  --text-color: #ECEDEE;
+  --text-color-soft: #889096;
+  --background-color: #16181A;
+  --background-color-soft: #1C1F21;
+  --border-color: #2B2F31;
+  --primary-color: #0091FF;
+  --success-color: #17B26A;
+  --warning-color: #F5A623;
+  --danger-color: #F31260;
+}
 
 .plugin {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
@@ -6,6 +29,8 @@
   font-weight: 400;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
+  color: var(--text-color);
+  background: var(--background-color);
 }
 
 .plugin-content {
@@ -37,6 +62,34 @@ h2 {
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 500;
+}
+
+.input, .textarea, .select {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--background-color);
+  color: var(--text-color);
+}
+
+.input:focus, .textarea:focus, .select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  background: var(--primary-color);
+  color: white;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+button[data-appearance="danger"] {
+  background: var(--danger-color);
 }
 
 .info-display {

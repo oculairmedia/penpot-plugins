@@ -1,163 +1,88 @@
-# Template API Plugin for Penpot
+# Penpot Template API Plugin
 
-This plugin enables programmatic modification and export of Penpot templates through a user interface and API endpoints.
+A Penpot plugin that enables users to create, manage, and export templates within Penpot. This plugin provides a powerful API for programmatically working with templates.
 
-## Prerequisites
+## Features
 
-- Node.js (v16 or higher)
-- npm (v8 or higher)
-- Access to a Penpot instance
+- Create and save templates from selected elements
+- List and manage saved templates
+- Load templates onto the canvas
+- Export templates in various formats
+- Modify template properties
+- Dark/Light theme support
 
-## Installation Steps
+## Documentation
 
-1. **Clone the Repository**
-   ```bash
-   git clone <your-repo-url>
-   cd template-api-plugin
-   ```
+- [Build and Development Setup](BUILD.md)
+- [Configuration Details](CONFIG.md)
+- [Implementation Plan](implementation_plan.md)
 
-2. **Install Dependencies**
-   ```bash
-   npm install
-   ```
+## Quick Start
 
-3. **Build the Plugin**
-   ```bash
-   npm run build
-   ```
+1. Clone the repository
+2. Install dependencies:
+```bash
+npm install
+```
 
-4. **Serve the Plugin**
-   You have several options to serve the plugin:
+3. Build the plugin:
+```bash
+npm run build
+```
 
-   a. Using http-server (recommended for testing):
-   ```bash
-   npm install -g http-server
-   http-server dist -p 3000 --cors
-   ```
+4. Start the development server:
+```bash
+npm run serve
+```
 
-   b. Using your own web server:
-   - Copy the contents of the `dist` directory to your web server
-   - Ensure CORS headers are properly set:
-     ```
-     Access-Control-Allow-Origin: *
-     Access-Control-Allow-Methods: GET, POST, OPTIONS
-     Access-Control-Allow-Headers: Content-Type
-     ```
+5. In Penpot:
+   - Go to Plugins configuration
+   - Add new plugin using URL: `http://localhost:3000/manifest.json`
 
-## Plugin Installation in Penpot
+## Development
 
-1. Open your Penpot instance
-2. Press `Ctrl + Alt + P` (or `Cmd + Alt + P` on macOS) to open the Plugin Manager
-3. Click "Install plugin"
-4. Enter the plugin manifest URL:
-   ```
-   http://<your-server-ip>:3000/manifest.json
-   ```
-   Replace `<your-server-ip>` with your server's IP address or domain name
+The plugin is built using:
+- TypeScript for type safety
+- Vite for building and development
+- Penpot Plugin API for integration
+- CSS for styling (with theme support)
+
+For detailed development instructions, see [BUILD.md](BUILD.md).
+
+## Configuration
+
+For detailed configuration information, including:
+- Vite configuration
+- TypeScript configuration
+- Plugin manifest
+- Package scripts
+
+See [CONFIG.md](CONFIG.md).
 
 ## Project Structure
+
 ```
-template-api-plugin/
-├── src/
-│   ├── plugin.ts    # Main plugin logic
-│   ├── main.ts      # UI interaction handling
-│   └── style.css    # Plugin styles
-├── public/
-│   └── manifest.json # Plugin manifest
-├── dist/            # Built files (after npm run build)
-└── index.html       # Plugin UI template
+penpot-plugin/
+├── public/              # Static files
+│   ├── index.html      # Plugin UI entry point
+│   ├── manifest.json   # Plugin manifest
+│   └── style.css      # Plugin styles
+├── src/                # Source files
+│   ├── main.ts        # UI logic
+│   ├── plugin.ts      # Plugin core logic
+│   └── style.css      # Source styles
+├── build/              # Build output
+├── docs/               # Documentation
+└── README.md          # This file
 ```
 
-## Plugin Features
+## Contributing
 
-1. **Template Information**
-   - View current board information
-   - List selected objects and their properties
-   - Access object IDs for modification
+1. Fork the repository
+2. Create your feature branch
+3. Make your changes
+4. Submit a pull request
 
-2. **Template Modification**
-   - Modify selected objects programmatically
-   - Example modification:
-     ```json
-     {
-       "name": "New Object Name",
-       "content": "New Content"
-     }
-     ```
+## License
 
-3. **Export Information**
-   - Get details about selected objects
-   - Prepare objects for external export processing
-
-## Development Workflow
-
-1. **Making Changes**
-   - Modify plugin logic in `src/plugin.ts`
-   - Update UI in `index.html` and `src/main.ts`
-   - Adjust styles in `src/style.css`
-
-2. **Building and Testing**
-   ```bash
-   # Build the plugin
-   npm run build
-
-   # Serve for testing
-   http-server dist -p 3000 --cors
-   ```
-
-3. **Reloading in Penpot**
-   - After making changes, rebuild the plugin
-   - In Penpot, remove and reinstall the plugin to see changes
-
-## Troubleshooting
-
-1. **CORS Issues**
-   - Ensure your server is sending proper CORS headers
-   - Check browser console for CORS-related errors
-   - Verify the manifest URL is accessible from Penpot
-
-2. **Plugin Not Loading**
-   - Verify the manifest.json is accessible
-   - Check browser console for loading errors
-   - Ensure all plugin files are being served correctly
-
-3. **Changes Not Appearing**
-   - Clear browser cache
-   - Rebuild the plugin
-   - Remove and reinstall the plugin in Penpot
-
-## Security Notes
-
-- The plugin requires specific permissions defined in manifest.json
-- All modifications are made through Penpot's plugin API
-- User authentication is handled by Penpot
-- No sensitive data is stored by the plugin
-
-## Quick Start Example
-
-1. **Build and Serve**
-   ```bash
-   # First time setup
-   npm install
-   npm run build
-   
-   # Serve the plugin
-   http-server dist -p 3000 --cors
-   ```
-
-2. **Install in Penpot**
-   - Open Penpot
-   - Press Ctrl + Alt + P
-   - Enter: http://<your-server-ip>:3000/manifest.json
-
-3. **Test Basic Functionality**
-   - Select an object in Penpot
-   - Click "Get Template Info" in the plugin
-   - Try modifying the object using its ID
-
-## Support
-
-For issues or questions:
-1. Check the troubleshooting section
-2. Review browser console logs
-3. Contact repository maintainers
+This project is licensed under the MIT License - see the LICENSE file for details.

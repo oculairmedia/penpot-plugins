@@ -5,16 +5,22 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview"
+    "build:plugin": "vite build",
+    "build:main": "esbuild src/main.ts --bundle --outfile=build/main.js",
+    "copy-files": "copy public\\*.* build\\ && copy index.html build\\",
+    "build": "npm run build:plugin && npm run build:main && npm run copy-files",
+    "preview": "vite preview",
+    "serve": "serve build --cors -l 3000 --no-clipboard"
   },
   "dependencies": {
     "@penpot/plugin-styles": "^1.1.0",
     "@penpot/plugin-types": "^1.1.0"
   },
   "devDependencies": {
+    "@types/node": "^20.10.6",
+    "esbuild": "^0.24.2",
+    "serve": "^14.2.4",
     "typescript": "^5.2.2",
-    "vite": "^5.0.0",
-    "@types/node": "^20.10.6"
+    "vite": "^5.0.0"
   }
 }
