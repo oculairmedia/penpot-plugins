@@ -19,17 +19,31 @@ function initializePlugin() {
       height: 600,
     });
 
-    // Perform storage checks after UI is initialized
+    // Perform initialization checks after UI is opened
     setTimeout(() => {
       try {
-        // Verify localStorage after initialization
+        // Verify localStorage
         if (typeof localStorage !== 'undefined') {
           localStorage.setItem('penpot_plugin_test', 'test');
           localStorage.removeItem('penpot_plugin_test');
           console.log("Template API Plugin: Storage check passed");
         }
+
+        // Verify library access and components
+        if (!penpot.library?.local) {
+          throw new Error('Library API not available');
+        }
+
+        // Log library status
+        console.log("Template API Plugin: Library check", {
+          libraryAvailable: !!penpot.library,
+          localLibraryAvailable: !!penpot.library.local,
+          componentsAvailable: !!penpot.library.local.components,
+          componentsCount: penpot.library.local.components?.length || 0
+        });
+
       } catch (e) {
-        console.warn("Template API Plugin: Storage check failed, some features may be limited", e);
+        console.warn("Template API Plugin: Initialization checks failed, some features may be limited", e);
       }
     }, 1000);
 
@@ -76,39 +90,103 @@ function getStoredTemplates(): Template[] {
   try {
     console.log("Storage: Attempting to read templates");
     
-    // Get templates from local library components
-    const components = penpot.library.local.components;
-    if (!components || components.length === 0) {
-      console.log("Storage: No components found");
+    // Verify library access
+    if (!penpot.library?.local) {
+      console.warn("Storage: Library API not available");
       return [];
     }
 
+    // Get templates from local library components with detailed logging
+    const components = penpot.library.local.components;
+    console.log("Storage: Library components status", {
+      componentsAvailable: !!components,
+      componentsCount: components?.length || 0,
+      timestamp: new Date().toISOString()
+    });
+
+    if (!components || components.length === 0) {
+      console.log("Storage: No components found in library");
+      return [];
+    }
+
+    // Log all components for debugging
+    console.log("Storage: Available components", {
+      components: components.map(comp => ({
+        id: comp.id,
+        name: comp.name,
+        hasPluginData: !!comp.getPluginData?.('templateData')
+      }))
+    });
+
     // Filter and convert components to templates
-    const templates = components
-      .filter(comp => comp.name.startsWith('template:'))
+    const templateComponents = components.filter(comp => comp.name.startsWith('template:'));
+    console.log("Storage: Found template components", {
+      count: templateComponents.length,
+      templateNames: templateComponents.map(comp => comp.name)
+    });
+
+    const templates = templateComponents
       .map(comp => {
         try {
-          // Get template data from plugin data
+          // Get and verify template data
           const templateData = comp.getPluginData('templateData');
-          const data = templateData ? JSON.parse(templateData) : {};
+          console.log("Storage: Processing template component", {
+            id: comp.id,
+            name: comp.name,
+            hasTemplateData: !!templateData
+          });
+
+          if (!templateData) {
+            console.warn("Storage: No template data found for component", {
+              componentId: comp.id,
+              componentName: comp.name
+            });
+            return null;
+          }
+
+          const data = JSON.parse(templateData);
           
-          // Get the main instance to access the shapes
-          const instance = comp.mainInstance();
+          // Get both main instance and create a new instance
+          const mainInstance = comp.mainInstance();
+          const instance = comp.instance();
+          
+          console.log("Storage: Component instances", {
+            componentId: comp.id,
+            hasMainInstance: !!mainInstance,
+            hasInstance: !!instance,
+            mainInstanceId: mainInstance?.id,
+            instanceId: instance?.id
+          });
+
+          if (!mainInstance && !instance) {
+            console.warn("Storage: No instances available for component", {
+              componentId: comp.id,
+              componentName: comp.name
+            });
+            return null;
+          }
+
+          // Use the instance that's available
+          const activeInstance = mainInstance || instance;
           
           return {
-            id: comp.id,
+            id: data.id || comp.id,
             name: comp.name.replace('template:', ''),
             description: data.description || '',
             createdAt: data.createdAt || new Date().toISOString(),
-            elements: instance ? [{
-              id: instance.id,
-              type: instance.type,
-              name: instance.name,
-              data: instance
-            }] : []
+            elements: [{
+              id: activeInstance.id,
+              type: activeInstance.type,
+              name: activeInstance.name,
+              data: activeInstance
+            }]
           };
         } catch (e) {
-          console.warn('Failed to parse template data:', e);
+          console.warn('Failed to parse template data:', {
+            error: e,
+            componentId: comp.id,
+            componentName: comp.name
+          });
           return null;
         }
       })
@@ -140,36 +218,113 @@ function saveStoredTemplates(templates: Template[]): void {
       throw new Error('Invalid templates data');
     }
 
+    // Verify library access
+    if (!penpot.library?.local) {
+      throw new Error('Library API not available');
+    }
+
+    console.log("Storage: Library status before save", {
+      componentsAvailable: !!penpot.library.local.components,
+      componentsCount: penpot.library.local.components?.length || 0
+    });
+
     // First, remove existing template components
     const existingComponents = penpot.library.local.components || [];
-    for (const comp of existingComponents) {
-      if (comp.name.startsWith('template:')) {
+    const templateComponents = existingComponents.filter(comp => comp.name.startsWith('template:'));
+    
+    console.log("Storage: Found existing template components", {
+      count: templateComponents.length,
+      names: templateComponents.map(comp => comp.name)
+    });
+
+    for (const comp of templateComponents) {
+      try {
         // Clear the component's content
         const instance = comp.mainInstance();
         if (instance) {
           instance.remove();
+          console.log("Storage: Removed template component instance", {
+            componentId: comp.id,
+            componentName: comp.name
+          });
         }
+      } catch (e) {
+        console.warn("Storage: Failed to remove template component", {
+          error: e,
+          componentId: comp.id,
+          componentName: comp.name
+        });
       }
     }
 
     // Save new templates as components
+    let savedCount = 0;
     for (const template of templates) {
-      // Create a new component
-      const shapes = template.elements.map(el => el.data);
-      const component = penpot.library.local.createComponent(shapes);
-      
-      // Set the template name
-      component.name = `template:${template.name}`;
-      
-      // Store template metadata using plugin data
-      const templateData = {
-        description: template.description,
-        createdAt: template.createdAt
-      };
-      component.setPluginData('templateData', JSON.stringify(templateData));
+      try {
+        console.log("Storage: Creating component for template", {
+          templateId: template.id,
+          templateName: template.name,
+          elementsCount: template.elements.length
+        });
+
+        // Create a board to contain the shapes
+        const board = penpot.createBoard();
+        board.name = `template-board-${template.name}`;
+        
+        // Add shapes to the board
+        for (const el of template.elements) {
+          console.log("Processing shape:", {
+            id: el.id,
+            type: el.type,
+            name: el.name
+          });
+          board.appendChild(el.data);
+        }
+
+        // Create the component with the board
+        const component = penpot.library.local.createComponent([board]);
+        if (!component) {
+          throw new Error('Failed to create component');
+        }
+
+        // Set the template name
+        component.name = `template:${template.name}`;
+        
+        // Store complete template metadata
+        const templateData = {
+          id: template.id,
+          description: template.description,
+          createdAt: template.createdAt,
+          elements: template.elements.map(el => ({
+            id: el.id,
+            type: el.type,
+            name: el.name
+          }))
+        };
+        component.setPluginData('templateData', JSON.stringify(templateData));
+
+        console.log("Storage: Template component created successfully", {
+          componentId: component.id,
+          componentName: component.name,
+          boardName: board.name,
+          templateData: templateData
+        });
+
+        savedCount++;
+      } catch (e) {
+        console.error("Storage: Failed to save template", {
+          error: e,
+          templateId: template.id,
+          templateName: template.name
+        });
+      }
     }
 
-    console.log("Storage: Templates saved successfully");
+    console.log("Storage: Templates save operation complete", {
+      attemptedCount: templates.length,
+      successfulSaves: savedCount,
+      libraryComponentsCount: penpot.library.local.components?.length || 0
+    });
   } catch (error) {
     console.error('Storage: Error saving templates:', {
       error,
@@ -260,25 +415,19 @@ async function handleSaveTemplate(data: { name: string; description: string }) {
           properties: Object.keys(obj)
         });
 
-        // Clone the object to avoid reference issues
-        const objString = JSON.stringify(obj);
-        console.log("Object stringified successfully");
-        
-        const objData = JSON.parse(objString);
-        console.log("Object parsed successfully");
-
-        const element = {
+        // Use the shape object directly
+        const element: TemplateElement = {
           id: obj.id,
-          type: obj.type,
+          type: obj.type as ShapeType,
           name: obj.name || 'Unnamed Object',
-          data: objData
+          data: obj  // Use the original shape object directly
         };
 
-        console.log("Element created successfully:", {
+        console.log("Element created:", {
           id: element.id,
           type: element.type,
           name: element.name,
-          dataKeys: Object.keys(element.data)
+          shapeType: obj.type
         });
 
         return element;
