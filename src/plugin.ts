@@ -267,22 +267,26 @@ function saveStoredTemplates(templates: Template[]): void {
           elementsCount: template.elements.length
         });
 
-        // Create a board to contain the shapes
-        const board = penpot.createBoard();
-        board.name = `template-board-${template.name}`;
-        
-        // Add shapes to the board
-        for (const el of template.elements) {
+        // Get all shapes from the template
+        const shapes = template.elements.map(el => {
           console.log("Processing shape:", {
             id: el.id,
             type: el.type,
-            name: el.name
+            name: el.name,
+            position: {
+              x: el.data.x,
+              y: el.data.y
+            },
+            size: {
+              width: el.data.width,
+              height: el.data.height
+            }
           });
-          board.appendChild(el.data);
-        }
+          return el.data;
+        });
 
-        // Create the component with the board
-        const component = penpot.library.local.createComponent([board]);
+        // Create the component with all shapes to maintain their relationships
+        const component = penpot.library.local.createComponent(shapes);
         if (!component) {
           throw new Error('Failed to create component');
         }
@@ -306,7 +310,7 @@ function saveStoredTemplates(templates: Template[]): void {
         console.log("Storage: Template component created successfully", {
           componentId: component.id,
           componentName: component.name,
-          boardName: board.name,
+          shapesCount: shapes.length,
           templateData: templateData
         });
 
