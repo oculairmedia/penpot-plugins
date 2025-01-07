@@ -2,49 +2,152 @@
 
 **Objective:** To develop a Penpot plugin that enables users to create templates within Penpot and export them via an API.
 
-**Phase 1: Enhance Template Creation and Management**
+**Phase 1: Template Creation and Management Implementation**
 
-1.  **Understand Existing Template Interaction:** The plugin currently interacts with existing elements on the Penpot canvas. To create templates, we need a way to "save" the current state of a selection or a board as a reusable template.
-2.  **Define Template Data Model (Refined):**
-    *   Include the Penpot file/board ID, a snapshot of the relevant elements' data (likely their JSON representation), template name, description, and potentially metadata like creation date.
-3.  **Implement Template Saving Logic:**
-    *   Add a new UI element (e.g., a button) to trigger the template saving process.
-    *   When triggered, capture the data of the selected elements or the current board.
-    *   Store this data along with the template name and description (obtained from user input). Local/browser storage is suitable for the initial phase.
-4.  **Implement Template Listing/Management UI (Refined):**
-    *   Display saved templates with their names and descriptions.
-    *   Provide an option to "load" a template, which would essentially add the saved elements back onto the canvas.
+1.  **Template Data Model:**
+     ```typescript
+     type ShapeType = "boolean" | "group" | "board" | "rectangle" | "path" | "text" | "ellipse" | "svg-raw" | "image";
 
-**Phase 2: Implement API-Based Export**
+     interface TemplateElement {
+       id: string;
+       type: ShapeType;
+       name: string;
+       data: Shape;
+     }
 
-1.  **Refine API Endpoints:**
-    *   `/api/templates`: List available templates.
-    *   `/api/templates/{templateId}`: Get template metadata (name, description).
-    *   `/api/templates/{templateId}/content`: Get the actual template content (the saved element data).
-    *   `/api/templates/{templateId}/penpot`:  **(New)** Get the original Penpot file/board associated with the template (if applicable and feasible).
-2.  **Implement API Logic (Backend - within `plugin.ts`):**
-    *   **List Templates:** Retrieve template metadata from storage.
-    *   **Get Template Metadata:** Retrieve metadata for a specific template.
-    *   **Get Template Content:** Retrieve the saved element data for a template.
-    *   **Get Penpot File/Board:** This will involve using the Penpot API, specifically the `get-file` method, to retrieve the original file associated with the template. (Source: Penpot API documentation provided earlier). Further investigation into Penpot's API capabilities is needed to determine if retrieving a board is also possible.
-3.  **Implement Export Mechanism (Refined):**
-    *   Modify the existing `handleTemplateExport` function or create a new one to handle the API-based export.
-    *   Instead of just sending a message to the UI, this function will retrieve the template content and make it available via the defined API endpoints.
+     interface Template {
+       id: string;
+       name: string;
+       description: string;
+       createdAt: string;
+       boardId?: string;
+       elements: TemplateElement[];
+     }
+     ```
 
-**Phase 3: UI Enhancements and API Integration**
+2.  **Storage Implementation:**
+     * Templates are stored as Penpot library components using the Plugin API
+     * Each template is stored as a component with:
+       - Name prefixed with 'template:' for identification
+       - Template metadata stored using component's plugin data
+       - Template elements stored as component shapes
+     * Implementation uses `penpot.library.local` API for persistence
+     * Template data is serialized/deserialized using JSON
 
-1.  **Integrate API into UI:** Modify the UI to fetch and display the list of templates from the `/api/templates` endpoint.
-2.  **Implement "Export via API" Option:** Add a button or option in the UI to trigger the API-based export, potentially allowing users to specify the desired format.
+3.  **Template Operations:**
+     * **Save Template:**
+       - Captures selected elements from canvas
+       - Creates a library component with template prefix
+       - Stores metadata using plugin data API
+       - Preserves element structure and properties
+     * **Load Template:**
+       - Retrieves component from library
+       - Extracts metadata from plugin data
+       - Creates instance of component on canvas
+     * **List Templates:**
+       - Filters library components by template prefix
+       - Deserializes metadata for each template
+       - Returns formatted template list
 
-**Technical Considerations (Refined):**
+**Phase 2: Template Storage and Plugin Data Implementation**
 
-*   **Penpot Plugin API:** Focus on using the Penpot Plugin API for data storage and potentially for accessing and manipulating Penpot files. The `@penpot/plugin-types` package provides TypeScript type definitions for the Penpot Plugin API, which can be installed using `npm install @penpot/plugin-types`. The `tsconfig.json` file needs to be updated to include the type definitions:
-    ```json
-    "typeRoots": [  "./node_modules/@types",  "./node_modules/@penpot"],"types": ["plugin-types"],
-    ```
-    (Source: Penpot Plugin API documentation). Further investigation into the Penpot Plugin API is needed to understand how to access canvas data and store plugin-specific data. The official documentation can be found at `https://penpot-docs-plugins.pages.dev/plugins/getting-started/` and practical examples can be found at `https://github.com/penpot/penpot-plugins-samples`. The Penpot Plugin API provides various interfaces and types for interacting with the Penpot environment. Some potentially relevant interfaces include `Penpot` (main interface), `Board`, `File`, `Page`, `ShapeBase`, `Rectangle`, `Ellipse`, `Path`, `Text`, `Image`, `SvgRaw`, `Group`, `Library`, `LibraryComponent`, `LibraryElement`, `Context`, `FontsContext`, `HistoryContext`, `Export`, and `PluginData`. Some relevant type aliases include `Shape`, `Point`, `Bounds`, `Gradient`, and `Color`. (Source: Penpot Plugin API modules documentation).
-*   **Data Storage:** Local/browser storage (e.g., `localStorage`) is suitable for the initial phase.
-*   **API Exposure:**  Since the plugin runs within Penpot, the "API" will likely be internal to the plugin. External access would require Penpot to provide a mechanism for plugins to expose HTTP endpoints, which is unlikely. The focus should be on providing access to the template data that other parts of Penpot or external tools could potentially use if Penpot's architecture allows for it.
+1.  **Plugin Data Storage:**
+     * Templates are stored using Penpot's Plugin Data API:
+       ```typescript
+       // Store template metadata
+       component.setPluginData('templateData', JSON.stringify({
+         description: template.description,
+         createdAt: template.createdAt
+       }));
+
+       // Retrieve template metadata
+       const templateData = component.getPluginData('templateData');
+       const data = JSON.parse(templateData);
+       ```
+
+2.  **Component Integration:**
+     * Templates are managed through Penpot's Library Components:
+       - Each template is a library component
+       - Template data is stored in plugin data
+       - Template content is stored in component instances
+       - Component names are prefixed with 'template:'
+
+3.  **Data Access Methods:**
+     * **Template Storage:**
+       ```typescript
+       // Save template
+       const component = penpot.library.local.createComponent(shapes);
+       component.name = `template:${template.name}`;
+       component.setPluginData('templateData', metadata);
+
+       // Load template
+       const instance = component.mainInstance();
+       const metadata = JSON.parse(component.getPluginData('templateData'));
+       ```
+
+**Phase 3: Future Enhancements**
+
+1.  **Implementation Status:**
+    * ✓ Template data model defined
+    * ✓ Component-based storage implemented
+    * ✓ Plugin data persistence working
+    * ✓ Basic template saving functional
+    * ✓ Template listing implemented
+
+2.  **Next Steps:**
+    * Enhance template loading functionality
+    * Add template modification capabilities
+    * Improve error handling and validation
+    * Add template preview functionality
+    * Implement template versioning
+
+3.  **Future Features:**
+    * Template categories and organization
+    * Advanced search and filtering
+    * Batch operations support
+    * Template sharing capabilities
+    * Export/import functionality
+
+**Technical Considerations:**
+
+*   **Penpot Plugin API Integration:**
+    * Using `@penpot/plugin-types` for TypeScript type safety
+    * Key interfaces utilized:
+      - `LibraryComponent` for template storage
+      - `Shape` for template content
+      - `PluginData` for metadata storage
+    * Template data structure:
+      ```typescript
+      type ShapeType = "boolean" | "group" | "board" | "rectangle" | "path" | "text" | "ellipse" | "svg-raw" | "image";
+
+      interface TemplateElement {
+        id: string;
+        type: ShapeType;
+        name: string;
+        data: Shape;
+      }
+
+      interface Template {
+        id: string;
+        name: string;
+        description: string;
+        createdAt: string;
+        boardId?: string;
+        elements: TemplateElement[];
+      }
+      ```
+
+*   **Data Storage Strategy:**
+    * Templates stored as library components
+    * Metadata stored using plugin data API
+    * Component instances for template content
+    * JSON serialization for data persistence
+
+*   **Plugin Architecture:**
+    * Component-based storage system
+    * Plugin data for metadata management
+    * Library API for template persistence
+    * Event-driven UI communication
 
 **Implementation Steps (Refined):**
 

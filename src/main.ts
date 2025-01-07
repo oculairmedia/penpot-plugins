@@ -108,62 +108,124 @@ function escapeHtml(str: string): string {
   return div.innerHTML;
 }
 
+// Debug logging function
+function logDebug(type: string, data: any) {
+  console.log(`[UI ${type}]`, {
+    data,
+    timestamp: new Date().toISOString(),
+    location: new Error().stack?.split('\n')[2]?.trim()
+  });
+}
+
+// Error logging function
+function logError(type: string, error: any) {
+  console.error(`[UI Error - ${type}]`, {
+    error,
+    message: error?.message,
+    stack: error?.stack,
+    timestamp: new Date().toISOString()
+  });
+}
+
 // Message handling from plugin.ts
 window.addEventListener("message", (event) => {
   const data = event.data;
+  logDebug('Received Message', { type: data.type, data });
 
-  switch (data.type) {
-    case "themechange":
-      if (data.source === "penpot") {
-        document.body.dataset.theme = data.theme;
-      }
-      break;
+  // Skip processing for undefined or null data
+  if (!data) {
+    return;
+  }
 
-    case "TEMPLATE_INFO":
-      templateInfo.textContent = JSON.stringify(data.data, null, 2);
-      break;
+  // Only process messages that have a type
+  if (!data.type) {
+    return;
+  }
 
-    case "MODIFICATION_COMPLETE":
-      showMessage("Template modified successfully", "success");
-      break;
+  logDebug('Received Message', { type: data.type, data });
 
-    case "EXPORT_COMPLETE":
-      showMessage("Template exported successfully", "success");
-      break;
+  try {
+    switch (data.type) {
+      case "themechange":
+        if (data.source === "penpot") {
+          document.body.dataset.theme = data.theme;
+          logDebug('Theme Changed', { theme: data.theme });
+        }
+        break;
 
-    case "EXPORT_NOT_SUPPORTED":
-      showMessage(data.message, "warning");
-      break;
+      case "TEMPLATE_INFO":
+        templateInfo.textContent = JSON.stringify(data.data, null, 2);
+        logDebug('Template Info Updated', data.data);
+        break;
 
-    case "TEMPLATES_LIST":
-      renderTemplates(data.data);
-      break;
+      case "MODIFICATION_COMPLETE":
+        showMessage("Template modified successfully", "success");
+        logDebug('Template Modified', { success: true });
+        break;
 
-    case "TEMPLATE_SAVED":
-      showMessage("Template saved successfully", "success");
-      templateName.value = '';
-      templateDescription.value = '';
-      // Refresh template list
-      parent.postMessage({ type: "LIST_TEMPLATES" }, "*");
-      break;
+      case "EXPORT_COMPLETE":
+        showMessage("Template exported successfully", "success");
+        logDebug('Template Exported', { success: true });
+        break;
 
-    case "TEMPLATE_LOADED":
-      showMessage("Template loaded successfully", "success");
-      break;
+      case "EXPORT_NOT_SUPPORTED":
+        showMessage(data.message, "warning");
+        logDebug('Export Not Supported', { message: data.message });
+        break;
 
-    case "TEMPLATE_DELETED":
-      showMessage("Template deleted successfully", "success");
-      // Refresh template list
-      parent.postMessage({ type: "LIST_TEMPLATES" }, "*");
-      break;
+      case "TEMPLATES_LIST":
+        renderTemplates(data.data);
+        logDebug('Templates List Rendered', { count: data.data?.length });
+        break;
 
-    case "WARNING":
-      showMessage(data.message, "warning");
-      break;
+      case "TEMPLATE_SAVED":
+        if (data.data) {
+          showMessage("Template saved successfully", "success");
+          templateName.value = '';
+          templateDescription.value = '';
+          // Refresh template list
+          parent.postMessage({ type: "LIST_TEMPLATES" }, "*");
+          logDebug('Template Saved', { templateId: data.data.id });
+        } else {
+          const error = new Error("Template data is missing");
+          logError('Template Save', error);
+          showMessage("Error: Template data is missing", "error");
+        }
+        break;
 
-    case "ERROR":
-      showMessage(`Error: ${data.message}`, "error");
-      break;
+      case "TEMPLATE_LOADED":
+        showMessage("Template loaded successfully", "success");
+        logDebug('Template Loaded', { templateData: data.data });
+        break;
+
+      case "TEMPLATE_DELETED":
+        showMessage("Template deleted successfully", "success");
+        // Refresh template list
+        parent.postMessage({ type: "LIST_TEMPLATES" }, "*");
+        logDebug('Template Deleted', { success: true });
+        break;
+
+      case "WARNING":
+        showMessage(data.message, "warning");
+        logDebug('Warning Received', { message: data.message });
+        break;
+
+      case "ERROR":
+        showMessage(`Error: ${data.message}`, "error");
+        logError('Error Received', {
+          message: data.message,
+          details: data.details,
+          debugInfo: data.debugInfo
+        });
+        break;
+
+      default:
+        logError('Unknown Message Type', { type: data.type });
+        break;
+    }
+  } catch (error) {
+    logError('Message Handler', error);
+    showMessage(`Error processing message: ${error instanceof Error ? error.message : 'Unknown error'}`, "error");
   }
 });
 
