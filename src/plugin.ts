@@ -1,7 +1,21 @@
 // Template API Plugin
 // This plugin provides an API for modifying and exporting Penpot templates
 
-import { Shape } from '@penpot/plugin-types';
+import { Shape, LibraryComponent, Penpot } from '@penpot/plugin-types';
+
+// Declare penpot as an ambient variable
+declare const penpot: Penpot;
+
+// Define Stroke interface
+interface Stroke {
+  strokeColor: string;
+  strokeOpacity: number;
+  strokeStyle: 'solid' | 'dashed' | 'dotted' | 'mixed';
+  strokeWidth: number;
+  strokeAlignment: 'center' | 'inner' | 'outer';
+  strokeCapEnd: 'none' | 'round' | 'square';
+  strokeCapStart: 'none' | 'round' | 'square';
+}
 
 // Wrap initialization in a function to ensure it runs after the Penpot API is ready
 function initializePlugin() {
@@ -267,34 +281,19 @@ function saveStoredTemplates(templates: Template[]): void {
           elementsCount: template.elements.length
         });
 
-        // Get all shapes from the template
-        const shapes = template.elements.map(el => {
-          console.log("Processing shape:", {
-            id: el.id,
-            type: el.type,
-            name: el.name,
-            position: {
-              x: el.data.x,
-              y: el.data.y
-            },
-            size: {
-              width: el.data.width,
-              height: el.data.height
-            }
-          });
-          return el.data;
-        });
-
-        // Create the component with all shapes to maintain their relationships
-        const component = penpot.library.local.createComponent(shapes);
+        // Find existing component or create new one
+        let component: LibraryComponent | null = null;
+        
+        // Use the original shapes directly
+        console.log("Creating component from original shapes");
+        const shapes = template.elements.map(el => el.data);
+        component = penpot.library.local.createComponent(shapes);
         if (!component) {
           throw new Error('Failed to create component');
         }
 
-        // Set the template name
+        // Update component name and metadata
         component.name = `template:${template.name}`;
-        
-        // Store complete template metadata
         const templateData = {
           id: template.id,
           description: template.description,
@@ -307,10 +306,10 @@ function saveStoredTemplates(templates: Template[]): void {
         };
         component.setPluginData('templateData', JSON.stringify(templateData));
 
-        console.log("Storage: Template component created successfully", {
+        console.log("Storage: Template component updated successfully", {
           componentId: component.id,
           componentName: component.name,
-          shapesCount: shapes.length,
+          elementsCount: template.elements.length,
           templateData: templateData
         });
 
@@ -404,55 +403,21 @@ async function handleSaveTemplate(data: { name: string; description: string }) {
       timestamp: new Date().toISOString()
     });
 
-    // Create deep copy of selected objects to ensure we capture all properties
-    console.log("Template save: Starting object processing", {
-      objectCount: selection.length,
-      timestamp: new Date().toISOString()
-    });
+    // Use selection directly as template elements
+    const elements = selection.map(obj => ({
+      id: obj.id,
+      type: obj.type as ShapeType,
+      name: obj.name || 'Unnamed Object',
+      data: obj
+    }));
 
-    const elements = selection.map(obj => {
-      try {
-        console.log("Processing object:", {
-          id: obj.id,
-          type: obj.type,
-          name: obj.name,
-          properties: Object.keys(obj)
-        });
-
-        // Use the shape object directly
-        const element: TemplateElement = {
-          id: obj.id,
-          type: obj.type as ShapeType,
-          name: obj.name || 'Unnamed Object',
-          data: obj  // Use the original shape object directly
-        };
-
-        console.log("Element created:", {
-          id: element.id,
-          type: element.type,
-          name: element.name,
-          shapeType: obj.type
-        });
-
-        return element;
-      } catch (err) {
-        console.error('Error processing object:', {
-          object: {
-            id: obj.id,
-            type: obj.type,
-            name: obj.name
-          },
-          error: err,
-          stack: err instanceof Error ? err.stack : undefined,
-          timestamp: new Date().toISOString()
-        });
-        throw new Error(`Failed to process selected object: ${obj.name || 'unnamed'}`);
-      }
-    });
-
-    console.log("Template save: Object processing complete", {
-      processedCount: elements.length,
-      timestamp: new Date().toISOString()
+    console.log("Template save: Using selected objects", {
+      count: elements.length,
+      objects: elements.map(el => ({
+        id: el.id,
+        type: el.type,
+        name: el.name
+      }))
     });
 
     // Generate a unique ID using timestamp and random number
@@ -631,28 +596,129 @@ async function handleGetTemplateInfo() {
   }
 }
 
-// Handle template modifications
-async function handleTemplateModification(modifications: TemplateModification[]) {
+// Shape modification types
+interface Fill {
+  fillColor: string;
+  fillOpacity: number;
+  fillColorGradient?: any;
+  fillColorRefId?: string;
+  fillColorRefFile?: string;
+  fillImage?: any;
+}
+
+interface GeometricProperties {
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+  rotation?: number;
+}
+
+interface ShapeProperties extends GeometricProperties {
+  text?: string;
+  fillColor?: string;
+  fillOpacity?: number;
+  strokeColor?: string;
+  strokeOpacity?: number;
+  strokeStyle?: 'solid' | 'dashed' | 'dotted' | 'mixed';
+  strokeWidth?: number;
+  strokeAlignment?: 'center' | 'inner' | 'outer';
+  strokeCapEnd?: 'none' | 'round' | 'square';
+  strokeCapStart?: 'none' | 'round' | 'square';
+  imageUrl?: string;
+}
+
+function handleTemplateModification(modifications: TemplateModification[]): void {
   try {
-    for (const mod of modifications) {
+    const results = modifications.map(mod => {
       const shape = penpot.selection.find(s => s.id === mod.elementId);
       if (!shape) {
         console.warn(`Shape ${mod.elementId} not found`);
-        continue;
+        return { id: mod.elementId, success: false };
       }
 
-      // Apply modifications
-      Object.assign(shape, mod.properties);
-    }
+      try {
+        const props = mod.properties as ShapeProperties;
+        const shapeObj = shape as any;
 
+        // Apply text modifications for text shapes
+        if (shape.type === 'text' && props.text) {
+          shapeObj.characters = props.text;
+        }
+
+        // Apply fill modifications
+        if (props.fillColor) {
+          const fill: Fill = {
+            fillColor: props.fillColor,
+            fillOpacity: props.fillOpacity || 1
+          };
+          shapeObj.fills = [fill];
+        }
+
+        // Apply stroke modifications
+        if (props.strokeColor && 'strokes' in shape) {
+          const stroke: Stroke = {
+            strokeColor: props.strokeColor,
+            strokeOpacity: props.strokeOpacity || 1,
+            strokeStyle: props.strokeStyle || 'solid',
+            strokeWidth: props.strokeWidth || 1,
+            strokeAlignment: props.strokeAlignment || 'center',
+            strokeCapEnd: props.strokeCapEnd || 'none',
+            strokeCapStart: props.strokeCapStart || 'none'
+          };
+          shapeObj.strokes = [stroke];
+        }
+
+        // Apply image source for image shapes
+        if (shape.type === 'image' && props.imageUrl) {
+          shapeObj.imageUrl = props.imageUrl;
+        }
+
+        // Apply geometric properties
+        const geometricProps: GeometricProperties = {
+          x: props.x,
+          y: props.y,
+          width: props.width,
+          height: props.height,
+          rotation: props.rotation
+        };
+
+        Object.entries(geometricProps).forEach(([key, value]) => {
+          if (value !== undefined) {
+            shapeObj[key] = value;
+          }
+        });
+
+        console.log("Shape modified:", {
+          id: shape.id,
+          type: shape.type,
+          appliedProperties: Object.keys(mod.properties)
+        });
+
+        return { id: shape.id, success: true };
+      } catch (err) {
+        console.error(`Failed to modify shape ${shape.id}:`, err);
+        return { id: shape.id, success: false };
+      }
+    });
+
+    const success = results.every(r => r.success);
+    
     penpot.ui.sendMessage({
       type: 'MODIFICATION_COMPLETE',
-      success: true
+      success,
+      results
     });
   } catch (error) {
-    handleError('Failed to modify template', error);
+    console.error("Template modification failed:", error);
+    penpot.ui.sendMessage({
+      type: 'MODIFICATION_COMPLETE',
+      success: false,
+      error: error instanceof Error ? error.message : String(error)
+    });
   }
 }
+
 
 // Handle template export
 async function handleTemplateExport(_options: ExportOptions) {
