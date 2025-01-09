@@ -75,6 +75,12 @@ templateList.addEventListener('click', (event) => {
     item.classList.remove('selected');
   });
   templateItem.classList.add('selected');
+
+  // Get template info when selected
+  const templateId = templateItem.getAttribute('data-template-id');
+  if (templateId) {
+    parent.postMessage({ type: "GET_TEMPLATE_INFO", data: { templateId } }, "*");
+  }
 });
 
 // Save template handler

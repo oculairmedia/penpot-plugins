@@ -347,7 +347,7 @@ penpot.ui.onMessage((message: any) => {
       handleTemplateExport(message.data);
       break;
     case 'GET_TEMPLATE_INFO':
-      handleGetTemplateInfo();
+      handleGetTemplateInfo(message.data);
       break;
     case 'SAVE_TEMPLATE':
       handleSaveTemplate(message.data);
@@ -572,25 +572,78 @@ function handleListTemplates() {
 }
 
 // Get current template information
-async function handleGetTemplateInfo() {
+async function handleGetTemplateInfo(data?: { templateId?: string }) {
   try {
-    const selection = penpot.selection;
-    const currentBoard = selection.find(s => s.type === 'board');
-
-    penpot.ui.sendMessage({
-      type: 'TEMPLATE_INFO',
-      data: {
-        currentBoard: currentBoard ? {
-          id: currentBoard.id,
-          name: currentBoard.name
-        } : null,
-        selection: selection.map(s => ({
-          id: s.id,
-          type: s.type,
-          name: s.name
-        }))
+    if (data?.templateId) {
+      // Get template information from stored templates
+      const templates = getStoredTemplates();
+      const template = templates.find(t => t.id === data.templateId);
+      
+      if (!template) {
+        throw new Error('Template not found');
       }
-    });
+
+      penpot.ui.sendMessage({
+        type: 'TEMPLATE_INFO',
+        data: {
+          id: template.id,
+          name: template.name,
+          description: template.description,
+          createdAt: template.createdAt,
+          elements: template.elements.map(el => ({
+            id: el.id,
+            type: el.type,
+            name: el.name
+          }))
+        }
+      });
+    } else {
+      // Fall back to showing current selection info
+      const selection = penpot.selection;
+      const currentBoard = selection.find(s => s.type === 'board');
+
+      if (currentBoard) {
+        // Get all elements within the board
+        const boardElements = currentBoard.children || [];
+        
+        penpot.ui.sendMessage({
+          type: 'TEMPLATE_INFO',
+          data: {
+            currentBoard: {
+              id: currentBoard.id,
+              name: currentBoard.name,
+              elements: boardElements.map(el => ({
+                id: el.id,
+                type: el.type,
+                name: el.name,
+                properties: {
+                  x: el.x,
+                  y: el.y,
+                  width: el.width,
+                  height: el.height,
+                  rotation: el.rotation,
+                  fills: el.fills,
+                  strokes: el.strokes,
+                  text: el.type === 'text' ? el.characters : undefined
+                }
+              }))
+            }
+          }
+        });
+      } else {
+        // If no board is selected, show selection info
+        penpot.ui.sendMessage({
+          type: 'TEMPLATE_INFO',
+          data: {
+            selection: selection.map(s => ({
+              id: s.id,
+              type: s.type,
+              name: s.name
+            }))
+          }
+        });
+      }
+    }
   } catch (error) {
     handleError('Failed to get template info', error);
   }
