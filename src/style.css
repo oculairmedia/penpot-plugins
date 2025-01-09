@@ -33,6 +33,18 @@ h2 {
   margin-bottom: 1rem;
 }
 
+.properties-form {
+  margin-top: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 1rem;
+  background: var(--background-color-secondary);
+}
+
+.properties-form .form-group:last-child {
+  margin-bottom: 0;
+}
+
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;

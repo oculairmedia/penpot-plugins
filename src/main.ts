@@ -8,6 +8,9 @@ document.body.dataset.theme = searchParams.get("theme") ?? "light";
 const templateInfo = document.getElementById("templateInfo") as HTMLPreElement;
 const elementId = document.getElementById("elementId") as HTMLInputElement;
 const properties = document.getElementById("properties") as HTMLTextAreaElement;
+const propertiesForm = document.createElement("div");
+propertiesForm.className = "properties-form";
+properties.parentElement?.insertBefore(propertiesForm, properties.nextSibling);
 const exportFormat = document.getElementById("exportFormat") as HTMLSelectElement;
 const exportScale = document.getElementById("exportScale") as HTMLInputElement;
 const messages = document.getElementById("messages") as HTMLDivElement;
@@ -22,6 +25,50 @@ parent.postMessage({ type: "LIST_TEMPLATES" }, "*");
 document.querySelector("[data-handler='get-info']")?.addEventListener("click", () => {
   parent.postMessage({ type: "GET_TEMPLATE_INFO" }, "*");
 });
+
+// Handle element ID input
+elementId.addEventListener("input", () => {
+  const id = elementId.value.trim();
+  if (id) {
+    parent.postMessage({
+      type: "GET_ELEMENT_INFO",
+      data: { elementId: id }
+    }, "*");
+  } else {
+    propertiesForm.innerHTML = "";
+    properties.value = "";
+  }
+});
+
+// Create form fields for properties
+function createPropertyFields(props: any) {
+  propertiesForm.innerHTML = "";
+  properties.value = JSON.stringify(props, null, 2);
+  
+  Object.entries(props).forEach(([key, value]) => {
+    const formGroup = document.createElement("div");
+    formGroup.className = "form-group";
+    
+    const label = document.createElement("label");
+    label.textContent = key;
+    
+    const input = document.createElement("input");
+    input.className = "input";
+    input.type = typeof value === "number" ? "number" : "text";
+    input.value = value as string;
+    input.dataset.key = key;
+    
+    input.addEventListener("input", () => {
+      const currentProps = JSON.parse(properties.value);
+      currentProps[key] = input.type === "number" ? Number(input.value) : input.value;
+      properties.value = JSON.stringify(currentProps, null, 2);
+    });
+    
+    formGroup.appendChild(label);
+    formGroup.appendChild(input);
+    propertiesForm.appendChild(formGroup);
+  });
+}
 
 document.querySelector("[data-handler='modify-template']")?.addEventListener("click", () => {
   try {
@@ -289,6 +336,12 @@ window.addEventListener("message", (event) => {
         logDebug('Warning Received', { message: data.message });
         break;
 
+      case "ELEMENT_INFO":
+        if (data.data && typeof data.data === "object") {
+          createPropertyFields(data.data);
+        }
+        break;
+        
       case "ERROR":
         showMessage(`Error: ${data.message}`, "error");
         logError('Error Received', {

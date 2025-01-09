@@ -361,6 +361,9 @@ penpot.ui.onMessage((message: any) => {
     case 'LIST_TEMPLATES':
       handleListTemplates();
       break;
+    case 'GET_ELEMENT_INFO':
+      handleGetElementInfo(message.data);
+      break;
   }
 });
 
@@ -869,6 +872,117 @@ async function handleTemplateExport(data: { templateId: string } & ExportOptions
     }
   } catch (error) {
     handleError('Failed to export template', error);
+  }
+}
+
+// Handle element info request
+function handleGetElementInfo(data: { elementId: string }) {
+  try {
+    // Define a type that includes all possible properties
+    interface PenpotElement {
+      id: string;
+      type: string;
+      name: string;
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+      rotation: number;
+      children?: PenpotElement[];
+      parent?: { type: string };
+      characters?: string;
+      fills?: Fill[];
+      strokes?: Stroke[];
+      imageUrl?: string;
+    }
+
+    // Helper function to recursively search for an element
+    function findElementById(elements: PenpotElement[], id: string): PenpotElement | null {
+      for (const element of elements) {
+        if (element.id === id) {
+          return element;
+        }
+        // If element has children (like groups or boards), search them too
+        if (element.children?.length) {
+          const found = findElementById(element.children, id);
+          if (found) return found;
+        }
+      }
+      return null;
+    }
+
+    // First try to find in selection
+    let shape = penpot.selection.find(s => s.id === data.elementId);
+    
+    // If not in selection, try to find in current board
+    if (!shape) {
+      const currentBoard = penpot.selection.find(s => s.type === 'board');
+      if (currentBoard) {
+        const boardElement = currentBoard as unknown as PenpotElement;
+        if (boardElement.children?.length) {
+          shape = findElementById(boardElement.children, data.elementId) as unknown as Shape;
+        }
+      }
+    }
+
+    if (!shape) {
+      throw new Error(`Shape with ID ${data.elementId} not found in selection or current board`);
+    }
+
+    const shapeElement = shape as unknown as PenpotElement;
+    console.log("Element search process:", {
+      searchedInSelection: true,
+      foundInSelection: !!penpot.selection.find(s => s.id === data.elementId),
+      searchedInBoard: !shape,
+      foundInBoard: !!shape,
+      elementDetails: {
+        id: shapeElement.id,
+        type: shapeElement.type,
+        name: shapeElement.name,
+        parent: shapeElement.parent?.type || 'none',
+        hasChildren: !!(shapeElement.children && Array.isArray(shapeElement.children)),
+        childrenCount: shapeElement.children?.length || 0
+      }
+    });
+
+    // Extract properties based on shape type
+    const properties: Record<string, any> = {
+      x: shape.x,
+      y: shape.y,
+      width: shape.width,
+      height: shape.height,
+      rotation: shape.rotation
+    };
+
+    // Add type-specific properties
+    if (shape.type === 'text') {
+      properties.text = shape.characters;
+    }
+
+    if ('fills' in shape && Array.isArray(shape.fills) && shape.fills[0]) {
+      const fill = shape.fills[0] as Fill;
+      properties.fillColor = fill.fillColor;
+      properties.fillOpacity = fill.fillOpacity;
+    }
+
+    if ('strokes' in shape && Array.isArray(shape.strokes) && shape.strokes[0]) {
+      const stroke = shape.strokes[0] as Stroke;
+      properties.strokeColor = stroke.strokeColor;
+      properties.strokeOpacity = stroke.strokeOpacity;
+      properties.strokeWidth = stroke.strokeWidth;
+      properties.strokeStyle = stroke.strokeStyle;
+    }
+
+    if (shape.type === 'image' && 'imageUrl' in shape) {
+      properties.imageUrl = (shape as any).imageUrl;
+    }
+
+    penpot.ui.sendMessage({
+      type: 'ELEMENT_INFO',
+      data: properties
+    });
+  } catch (error) {
+    handleError('Failed to get element info', error);
   }
 }
 
