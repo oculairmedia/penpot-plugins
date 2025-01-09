@@ -784,24 +784,16 @@ async function handleTemplateExport(data: { templateId: string } & ExportOptions
         ? exportData 
         : new Uint8Array(exportData);
       
-      // Create a Blob from the binary data
-      console.log("Creating blob from export data...");
-      const blob = new Blob([binaryData], { 
-        type: exportConfig.type === 'png' ? 'image/png' : 
-              exportConfig.type === 'svg' ? 'image/svg+xml' :
-              exportConfig.type === 'pdf' ? 'application/pdf' : 
-              'image/jpeg'
-      });
-      
-      // Create a download URL
-      const url = URL.createObjectURL(blob);
-      
-      console.log("Export complete, sending URL to UI");
-      // Send the URL back to the UI for download
+      // Send the binary data directly to the UI
+      console.log("Export complete, sending binary data to UI");
       penpot.ui.sendMessage({
         type: 'EXPORT_COMPLETE',
         data: {
-          url,
+          binaryData: Array.from(binaryData), // Convert Uint8Array to regular array for serialization
+          mimeType: exportConfig.type === 'png' ? 'image/png' : 
+                   exportConfig.type === 'svg' ? 'image/svg+xml' :
+                   exportConfig.type === 'pdf' ? 'application/pdf' : 
+                   'image/jpeg',
           filename: `${template.name}${exportConfig.suffix || ''}.${exportConfig.type}`
         }
       });

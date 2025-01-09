@@ -193,8 +193,31 @@ window.addEventListener("message", (event) => {
         break;
 
       case "EXPORT_COMPLETE":
-        showMessage("Template exported successfully", "success");
-        logDebug('Template Exported', { success: true });
+        try {
+          // Create a Blob from the binary data
+          const binaryArray = new Uint8Array(data.data.binaryData);
+          const blob = new Blob([binaryArray], { type: data.data.mimeType });
+          
+          // Create a download URL
+          const url = URL.createObjectURL(blob);
+          
+          // Create and trigger download
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = data.data.filename;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          
+          // Clean up
+          URL.revokeObjectURL(url);
+          
+          showMessage("Template exported successfully", "success");
+          logDebug('Template Exported', { success: true });
+        } catch (error) {
+          logError('Export Error', error);
+          showMessage(`Error exporting template: ${error instanceof Error ? error.message : 'Unknown error'}`, "error");
+        }
         break;
 
       case "EXPORT_NOT_SUPPORTED":
