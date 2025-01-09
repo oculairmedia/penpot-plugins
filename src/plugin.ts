@@ -94,9 +94,9 @@ interface TemplateModification {
 }
 
 interface ExportOptions {
-  format: 'png' | 'svg' | 'pdf';
+  type: 'svg' | 'png' | 'jpeg' | 'pdf';
   scale?: number;
-  quality?: number;
+  suffix?: string;
 }
 
 // Template storage functions
@@ -721,30 +721,107 @@ function handleTemplateModification(modifications: TemplateModification[]): void
 
 
 // Handle template export
-async function handleTemplateExport(_options: ExportOptions) {
+async function handleTemplateExport(data: { templateId: string } & ExportOptions) {
   try {
-    const selection = penpot.selection;
-    if (!selection || selection.length === 0) {
-      throw new Error('No objects selected for export');
-    }
-
-    const currentBoard = selection.find(s => s.type === 'board');
-    if (!currentBoard) {
-      throw new Error('No board selected');
-    }
-
-    // Currently we can only work with selected objects
-    penpot.ui.sendMessage({
-      type: 'EXPORT_INFO',
-      message: 'Select the objects you want to export in Penpot',
-      data: {
-        selectedObjects: selection.map(obj => ({
-          id: obj.id,
-          type: obj.type,
-          name: obj.name
-        }))
+    console.log("Starting template export with data:", {
+      templateId: data.templateId,
+      exportOptions: {
+        type: data.type,
+        scale: data.scale,
+        suffix: data.suffix
       }
     });
+
+    // Find the template
+    const templates = getStoredTemplates();
+    const template = templates.find(t => t.id === data.templateId);
+    if (!template) {
+      throw new Error('Template not found');
+    }
+
+    console.log("Found template:", {
+      templateId: template.id,
+      templateName: template.name,
+      elementsCount: template.elements.length
+    });
+
+    // Get the component instance from the template
+    const component = template.elements[0].data;
+    if (!component) {
+      throw new Error('Template component not found');
+    }
+
+    console.log("Component details:", {
+      componentId: component.id,
+      componentType: component.type,
+      componentName: component.name
+    });
+
+    // Get the component's bounds to determine the export size
+    const bounds = component.bounds;
+    console.log("Component bounds:", bounds);
+    
+    if (!bounds) {
+      throw new Error('Could not determine component bounds');
+    }
+
+    try {
+      // Configure export settings
+      const exportConfig = {
+        type: data.type || 'png',
+        scale: data.scale || 2, // Default 2x scale for better quality
+        suffix: data.suffix || ''
+      };
+
+      console.log("Starting export with config:", exportConfig);
+      
+      // Export the component directly
+      const exportData = await component.export(exportConfig);
+      console.log("Export successful, data size:", exportData.length);
+      
+      // Convert the export data to a Uint8Array if it isn't already
+      const binaryData = exportData instanceof Uint8Array 
+        ? exportData 
+        : new Uint8Array(exportData);
+      
+      // Create a Blob from the binary data
+      console.log("Creating blob from export data...");
+      const blob = new Blob([binaryData], { 
+        type: exportConfig.type === 'png' ? 'image/png' : 
+              exportConfig.type === 'svg' ? 'image/svg+xml' :
+              exportConfig.type === 'pdf' ? 'application/pdf' : 
+              'image/jpeg'
+      });
+      
+      // Create a download URL
+      const url = URL.createObjectURL(blob);
+      
+      console.log("Export complete, sending URL to UI");
+      // Send the URL back to the UI for download
+      penpot.ui.sendMessage({
+        type: 'EXPORT_COMPLETE',
+        data: {
+          url,
+          filename: `${template.name}${exportConfig.suffix || ''}.${exportConfig.type}`
+        }
+      });
+    } catch (error) {
+      console.error("Export operation failed:", {
+        error,
+        component: {
+          id: component.id,
+          name: component.name,
+          type: component.type,
+          bounds: bounds
+        }
+      });
+      
+      if (error instanceof Error) {
+        throw new Error(`Export operation failed: ${error.message}`);
+      } else {
+        throw new Error('Export operation failed: Unknown error');
+      }
+    }
   } catch (error) {
     handleError('Failed to export template', error);
   }

@@ -19,10 +19,28 @@ export default defineConfig({
   publicDir: false,
   server: {
     port: 3000,
-    cors: true,
-    host: true,
+    cors: {
+      origin: '*',
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+    },
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With'
+    },
+    host: '0.0.0.0',
     fs: {
       allow: ['..']
+    },
+    hmr: {
+      protocol: 'ws',
+      host: 'localhost',
+      overlay: true
+    },
+    watch: {
+      usePolling: true,
+      interval: 100
     }
   },
   plugins: [
@@ -38,8 +56,16 @@ export default defineConfig({
                 throw new Error('Penpot plugin API not found');
               }
               
+              // Enable HMR
+              if (import.meta.hot) {
+                import.meta.hot.accept();
+              }
+              
               // Load the actual plugin code
               import('/src/plugin.ts')
+                .then(() => {
+                  console.log('Plugin loaded successfully');
+                })
                 .catch(error => console.error('Failed to load plugin:', error));
             `);
             return;

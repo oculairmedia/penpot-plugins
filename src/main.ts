@@ -39,13 +39,42 @@ document.querySelector("[data-handler='modify-template']")?.addEventListener("cl
 });
 
 document.querySelector("[data-handler='export-template']")?.addEventListener("click", () => {
+  // Get the selected template
+  const selectedTemplate = document.querySelector('.template-item.selected');
+  if (!selectedTemplate) {
+    showMessage("Please select a template to export", "error");
+    return;
+  }
+
+  const templateId = selectedTemplate.getAttribute('data-template-id');
+  if (!templateId) {
+    showMessage("Invalid template selection", "error");
+    return;
+  }
+
   parent.postMessage({
     type: "EXPORT_TEMPLATE",
     data: {
-      format: exportFormat.value,
+      templateId,
+      type: exportFormat.value,
       scale: parseFloat(exportScale.value)
     }
   }, "*");
+});
+
+// Add template selection handling
+templateList.addEventListener('click', (event) => {
+  const templateItem = (event.target as HTMLElement).closest('.template-item');
+  if (!templateItem) return;
+
+  // Don't select if clicking on action buttons
+  if ((event.target as HTMLElement).closest('[data-action]')) return;
+
+  // Toggle selection
+  document.querySelectorAll('.template-item').forEach(item => {
+    item.classList.remove('selected');
+  });
+  templateItem.classList.add('selected');
 });
 
 // Save template handler

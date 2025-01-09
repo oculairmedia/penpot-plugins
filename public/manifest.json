@@ -1,6 +1,7 @@
 {
   "name": "Template API Plugin",
   "code": "plugin.js",
+  "host": "http://100.81.139.20:3000",
   "description": "Plugin for programmatically modifying and exporting Penpot templates",
   "permissions": [
     "content:read",

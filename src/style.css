@@ -39,6 +39,19 @@ h2 {
   font-weight: 500;
 }
 
+.helper-text {
+  margin: 0.5rem 0;
+  color: var(--text-color-soft);
+  font-size: 0.9rem;
+}
+
+.input-help {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--text-color-soft);
+  font-size: 0.8rem;
+}
+
 .info-display {
   margin-top: 1rem;
   padding: 1rem;
@@ -90,6 +103,19 @@ h2 {
   background: var(--background-color-soft);
   border: 1px solid var(--border-color);
   border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.template-item:hover {
+  border-color: var(--primary-color);
+  background: var(--background-color);
+}
+
+.template-item.selected {
+  border-color: var(--primary-color);
+  background: var(--background-color);
+  box-shadow: 0 0 0 2px var(--primary-color-muted);
 }
 
 .template-item h3 {
