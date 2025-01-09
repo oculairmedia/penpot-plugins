@@ -98,7 +98,7 @@ h2 {
   margin-top: 1rem;
 }
 
-.template-item {
+.plugin .template-list .template-item {
   padding: 1rem;
   background: var(--background-color-soft);
   border: 1px solid var(--border-color);
@@ -107,15 +107,16 @@ h2 {
   transition: all 0.2s ease;
 }
 
-.template-item:hover {
+.plugin .template-list .template-item:hover {
   border-color: var(--primary-color);
   background: var(--background-color);
 }
 
-.template-item.selected {
-  border-color: var(--primary-color);
-  background: var(--background-color);
-  box-shadow: 0 0 0 2px var(--primary-color-muted);
+.plugin .template-list .template-item.selected {
+  border-color: #1a73e8 !important;
+  background: #f8f9fa !important;
+  box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2) !important;
+  transform: translateY(-1px) !important;
 }
 
 .template-item h3 {

@@ -71,15 +71,36 @@ templateList.addEventListener('click', (event) => {
   if ((event.target as HTMLElement).closest('[data-action]')) return;
 
   // Toggle selection
+  const wasSelected = templateItem.classList.contains('selected');
+  
+  // Clear any existing selection
   document.querySelectorAll('.template-item').forEach(item => {
     item.classList.remove('selected');
+    // Reset styles
+    const el = item as HTMLElement;
+    el.style.borderColor = '';
+    el.style.background = '';
+    el.style.boxShadow = '';
+    el.style.transform = '';
   });
-  templateItem.classList.add('selected');
-
-  // Get template info when selected
-  const templateId = templateItem.getAttribute('data-template-id');
-  if (templateId) {
-    parent.postMessage({ type: "GET_TEMPLATE_INFO", data: { templateId } }, "*");
+  
+  // Toggle the clicked item
+  if (!wasSelected) {
+    templateItem.classList.add('selected');
+    // Apply inline styles
+    const el = templateItem as HTMLElement;
+    el.style.borderColor = '#1a73e8';
+    el.style.background = '#f8f9fa';
+    el.style.boxShadow = '0 0 0 2px rgba(26, 115, 232, 0.2)';
+    el.style.transform = 'translateY(-1px)';
+    // Get template info when selected
+    const templateId = templateItem.getAttribute('data-template-id');
+    if (templateId) {
+      parent.postMessage({ type: "GET_TEMPLATE_INFO", data: { templateId } }, "*");
+    }
+  } else {
+    // Clear template info when deselected
+    templateInfo.textContent = '';
   }
 });
 
