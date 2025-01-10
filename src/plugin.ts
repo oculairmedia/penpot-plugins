@@ -687,9 +687,30 @@ interface ShapeProperties extends GeometricProperties {
 function handleTemplateModification(modifications: TemplateModification[]): void {
   try {
     const results = modifications.map(mod => {
-      const shape = penpot.selection.find(s => s.id === mod.elementId);
+      // First try to find in selection
+      let shape = penpot.selection.find(s => s.id === mod.elementId);
+      
+      // If not in selection, try to find in current board
       if (!shape) {
-        console.warn(`Shape ${mod.elementId} not found`);
+        const currentBoard = penpot.selection.find(s => s.type === 'board');
+        if (currentBoard && currentBoard.children) {
+          // Recursively search through board children
+          const findInChildren = (children: any[]): any => {
+            for (const child of children) {
+              if (child.id === mod.elementId) return child;
+              if (child.children) {
+                const found = findInChildren(child.children);
+                if (found) return found;
+              }
+            }
+            return null;
+          };
+          shape = findInChildren(currentBoard.children);
+        }
+      }
+
+      if (!shape) {
+        console.warn(`Shape ${mod.elementId} not found in selection or current board`);
         return { id: mod.elementId, success: false };
       }
 
