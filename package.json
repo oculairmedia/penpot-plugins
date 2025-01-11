@@ -17,9 +17,12 @@
     "@penpot/plugin-types": "^1.1.0"
   },
   "devDependencies": {
+    "@types/jest": "^29.5.14",
     "@types/node": "^20.10.6",
     "esbuild": "^0.24.2",
+    "jest": "^29.7.0",
     "serve": "^14.2.4",
+    "ts-jest": "^29.2.5",
     "typescript": "^5.2.2",
     "vite": "^5.0.0"
   }
