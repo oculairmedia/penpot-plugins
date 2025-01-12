@@ -7,10 +7,10 @@
     "dev": "vite",
     "build:plugin": "vite build",
     "build:main": "esbuild src/main.ts --bundle --outfile=build/main.js",
-    "copy-files": "copy public\\*.* build\\",
+    "copy-files": "cp -r public/* build/",
     "build": "npm run build:plugin && npm run build:main && npm run copy-files",
     "preview": "vite preview",
-    "serve": "serve build --cors -l 3000 --no-clipboard"
+    "serve": "serve build --cors -l 3005 --no-clipboard"
   },
   "dependencies": {
     "@penpot/plugin-styles": "^1.1.0",

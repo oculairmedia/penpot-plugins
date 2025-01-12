@@ -37,7 +37,7 @@ npm run serve
 
 5. In Penpot:
    - Go to Plugins configuration
-   - Add new plugin using URL: `http://localhost:3000/manifest.json`
+   - Add new plugin using URL: `http://localhost:3005/manifest.json`
 
 ## Development
 

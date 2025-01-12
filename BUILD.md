@@ -69,12 +69,12 @@ To serve the plugin locally:
 npm run serve
 ```
 
-This will serve the plugin at `http://localhost:3000` with CORS enabled.
+This will serve the plugin at `http://localhost:3005` with CORS enabled.
 
 ## Plugin Configuration in Penpot
 
 1. In Penpot, go to Plugins configuration
-2. Add new plugin using the URL: `http://localhost:3000/manifest.json`
+2. Add new plugin using the URL: `http://localhost:3005/manifest.json`
 3. The plugin should appear in the Penpot interface
 
 ## Important Notes
@@ -89,7 +89,7 @@ This will serve the plugin at `http://localhost:3000` with CORS enabled.
 ### Common Issues and Solutions
 
 1. Port Conflicts
-   - If port 3000 is in use, kill all Node processes:
+   - If port 3005 is in use, kill all Node processes:
    ```bash
    taskkill /F /IM node.exe  # Windows
    # or

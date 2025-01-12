@@ -18,7 +18,7 @@ export default defineConfig({
   },
   publicDir: false,
   server: {
-    port: 3000,
+    port: 3005,
     cors: {
       origin: '*',
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -76,6 +76,6 @@ export default defineConfig({
     }
   ],
   preview: {
-    port: 3000,
+    port: 3005,
   },
 });

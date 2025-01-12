@@ -19,8 +19,8 @@ RUN npm run build
 # Install http-server globally
 RUN npm install -g http-server
 
-# Expose port 3000
-EXPOSE 3000
+# Expose port 3005
+EXPOSE 3005
 
 # Start the server
-CMD ["http-server", "dist", "-p", "3000", "--cors"]
+CMD ["http-server", "dist", "-p", "3005", "--cors"]

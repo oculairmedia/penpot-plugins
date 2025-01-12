@@ -4,7 +4,7 @@ services:
   template-api:
     image: oculair/penpot-template-api:latest
     ports:
-      - 3000:3000
+      - 3005:3005
     restart: unless-stopped
     networks:
       - penpot-plugins-net
@@ -17,7 +17,7 @@ services:
         - CMD
         - node
         - -e
-        - require("http").get("http://localhost:3000/manifest.json", (res) => {
+        - require("http").get("http://localhost:3005/manifest.json", (res) => {
           if (res.statusCode !== 200) { process.exit(1) } });
       interval: 30s
       timeout: 10s
